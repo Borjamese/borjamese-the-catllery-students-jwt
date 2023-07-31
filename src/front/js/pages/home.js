@@ -1,25 +1,48 @@
 import React, { useState, useEffect } from "react";
-import catImageUrl from "../../img/cat-gallery.png";
-import "../../styles/home.css";
+import { useNavigate } from "react-router-dom";
 
-export const Home = () => {
-	const [tokenExists, setTokenExists] = useState(false);
+export const ListMyCats = () => {
+  const navigate = useNavigate();
+  // const { store, actions } = useContext(Context);
+  const [favorites, setFavorites] = useState([]);
+  const [userName, setUserName] = useState("");
 
-	useEffect(() => {
-		const token = localStorage.getItem("miTokenJWT");
-		if (token) {
-			setTokenExists(true);
-		} else {
-			setTokenExists(false);
-		}
-	});
-	return (
-		<div className="text-center mt-5">
-			<h1>The CatGallery</h1>
-			<p>
-				<img style={{ width: 200 }} src={catImageUrl} />
-			</p>
-			{tokenExists && (<p className="text-success">¡Ejercicio 3 resuelto! Para enviar datos a un endpoint, sobretodo si son sensibles, utilizamos el método POST. Además, las URLs de la API de Flask estan prefijadas  /api. Puesto que ahora disponemos del token JWT, nuestra aplicación React renderiza una información diferente de cuando no teníamos el token. Por ejemplo, en el menú de navegación estamos mostrando unas opciones diferente. Abre navbar.js y tómate un tiempo para entender porque ahora se muestran unos botones diferentes. Luego, pasa al ejercicio 4.</p>)}
-		</div>
-	);
+  useEffect(() => {
+    const token = localStorage.getItem("miTokenJWT");
+
+    if (!token) {
+      // Mmmmm... no tengo el token, no debería poder acceder a está página de React
+      navigate("/login");
+    }
+
+    const getAllCats = () => {
+
+      fetch(process.env.BACKEND_URL + "/api/cats", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          setFavorites(data)
+        })
+        .catch((error) => console.log("error", error));
+    };
+    getAllCats()
+  }, []);
+
+  return (
+    <div className="container text-center mt-5">
+      <div className="row mt-4">
+        {favorites.map((fav, i) => (
+          <div className="col-3" key={i}>
+            <img src={fav.image_url} />
+            <p className="fw-bold text-success">{fav.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
